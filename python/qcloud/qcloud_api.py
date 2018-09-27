@@ -91,6 +91,7 @@ class Cvm:
         result = json.loads(result)
         total_cvm = result["Response"]["TotalCount"]
         print total_cvm
+		#分页查询
         Offset,length,i= 0,0,0
         ins= []
         while(i<total_cvm):
