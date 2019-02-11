@@ -1,0 +1,44 @@
+#腾讯云api签名
+import requests
+import sys
+import json
+import hashlib
+import time
+import base64
+import hmac
+import random
+
+class Qcloud(object):
+	def __init__(self,config,Id,key):
+            self.config = config
+            self.url = 'https://cdn.api.qcloud.com/v2/index.php'
+            self.id  = ''
+            self.Key = ''
+
+	def Auth(self):
+            data = {}
+            Singna = []
+            Random = range(1000000)
+            number = random.choice(Random)
+            data['SecretId'] = self.id
+            data['Nonce'] = number
+            data['Timestamp']  = int(time.time())
+            data = dict(data,**self.config)
+            base = sorted(data.items(), key=lambda data:data[0])
+            for i in base:
+                Singna.append(str(i[0])+ '=' + str(i[1]) +'&') #end='')
+                result = 'POSTcdn.api.qcloud.com/v2/index.php?' + ''.join(Singna).rstrip('&')
+            self.Key = self.Key.encode(encoding ='utf-8')
+            result = result.encode(encoding='utf-8')
+            uri = hmac.new(self.Key,result,digestmod=hashlib.sha1).digest()
+            key = base64.b64encode(uri)
+            data['Signature'] = key
+            return data
+
+if __name__ == '__main__':
+    config = {
+	'Action': 'DescribeCdnHosts','detail':'1'}
+    res = Qcloud(config,'access_key','securt_key')
+    data = res.Auth()
+    html = requests.post(res.url,data=data)
+    print(json.loads(html.text))

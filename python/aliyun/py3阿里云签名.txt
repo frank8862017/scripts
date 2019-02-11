@@ -1,0 +1,72 @@
+#----------阿里云api签名
+class AliAuth(object):
+
+    Timestamp = datetime.utcnow().isoformat()
+    SignatureNonce = str(uuid.uuid1())
+
+    def __init__(self, config, Id=None, key=None):
+        '''
+            this is ali api auth single, now, any api request parame to main
+        '''
+        assert config['Action'], "Value error"
+
+        self.config = config
+        self.url = 'http://ecs.aliyuncs.com/'
+        self.id  = ''
+        self.Key = ''
+        self.__data = dict({
+            "AccessKeyId": self.id,
+            "SignatureMethod": 'HMAC-SHA1',
+            "SignatureVersion": "1.0",
+            "SignatureNonce": self.SignatureNonce,
+            "Timestamp": self.Timestamp,
+            "Version": "2014-05-26",
+            "Format": "JSON"
+        }, **self.config)
+
+    @classmethod
+    def reload(cls, body):
+        cls.Timestamp = datetime.utcnow().isoformat()
+        cls.SignatureNonce = str(uuid.uuid1())
+        return cls(config=body)
+
+    @property
+    def data(self):
+        return self.__data
+
+    @data.setter
+    def data(self, value):
+        if self.__data:
+            raise AssertionError("not allow opeartion")
+        self.__data = value
+
+    @staticmethod
+    def percent_encode(encodeStr):
+        if isinstance(encodeStr, bytes):
+            encodeStr = encodeStr.decode(sys.stdin.encoding)
+        res = parse.quote_plus(encodeStr.encode('utf-8'), '')
+        res = res.replace('+', '%20').replace('*', '%2A').replace('%7E', '~')
+        return res
+
+    def auth(self):
+        base = sorted(self.data.items(), key=lambda data:data[0])
+        canstring = ''
+        for k, v in base:
+            canstring += '&' + self.percent_encode(k) + '=' + self.percent_encode(v)
+        self.Key += "&"
+        data = 'POST&%2F&' + self.percent_encode(canstring[1:])
+        self._salt(data)
+        return self.data
+
+    def _salt(self, data):
+        result = data.encode(encoding='utf-8')
+        uri = hmac.new(self.Key.encode("utf-8"), result, hashlib.sha1).digest()
+        key = base64.b64encode(uri).strip()
+        self.data['Signature'] = key
+        return self.data
+if __name__ == '__main__':	
+	data = {
+		"Action": "",
+		}
+    s = AliAuth(config=data)
+    token = s.auth()
