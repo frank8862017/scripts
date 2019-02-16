@@ -4,7 +4,7 @@ import threading
 
 class downloader:
     def __init__(self):
-        self.url='https://www.flash.cn/flashplayer/3200142/install_flash_player_cn.exe'
+        self.url='http://xx.com/aa.exe'
         self.num=8
         self.name=self.url.split('/')[-1]
         r = requests.head(self.url)
